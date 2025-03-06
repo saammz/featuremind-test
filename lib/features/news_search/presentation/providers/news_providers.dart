@@ -1,3 +1,5 @@
+import 'package:dartz/dartz.dart';
+import 'package:featuremind/core/error/failures.dart';
 import 'package:featuremind/features/news_search/data/datasources/news_local_datasource.dart';
 import 'package:featuremind/features/news_search/data/datasources/news_remote_datasource.dart';
 import 'package:featuremind/features/news_search/data/repositories/news_repository_impl.dart';
@@ -87,14 +89,16 @@ class SearchState {
   }
 }
 
+// In features/news_search/presentation/providers/news_providers.dart
+
 class SearchNotifier extends StateNotifier<SearchState> {
   final SearchNewsUseCase searchNewsUseCase;
 
   SearchNotifier({required this.searchNewsUseCase}) : super(SearchState());
 
-  Future<void> searchNews(String query) async {
+  Future<Either<Failure, List<NewsArticle>>> searchNews(String query) async {
     // Prevent duplicate searches
-    if (state.isLoading) return;
+    if (state.isLoading) return Right([]);
 
     state = state.copyWith(isLoading: true, error: null);
 
@@ -109,6 +113,9 @@ class SearchNotifier extends StateNotifier<SearchState> {
               ...articles
             ],
             currentPage: state.currentPage + 1));
+
+    // Return the result to allow the caller to handle navigation
+    return result;
   }
 
   void resetSearch() {
