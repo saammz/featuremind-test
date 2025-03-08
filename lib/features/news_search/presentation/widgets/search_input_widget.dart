@@ -39,9 +39,19 @@ class SearchInputWidget extends ConsumerWidget {
                   child: CircularProgressIndicator(strokeWidth: 2),
                 ),
               )
-            : IconButton(
-                icon: const Icon(Icons.search),
-                onPressed: () => _validateAndSearch(context),
+            : Container(
+                margin: EdgeInsets.only(right: 10),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(50),
+                  color: Colors.blue,
+                ),
+                child: IconButton(
+                  icon: const Icon(
+                    Icons.search,
+                    color: Colors.white,
+                  ),
+                  onPressed: () => _validateAndSearch(context),
+                ),
               ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),

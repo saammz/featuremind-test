@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../models/news_article_model.dart';
 
 // Custom exception class
@@ -25,13 +26,14 @@ class NewsRemoteDataSource {
   Future<List<NewsArticleModel>> searchNews({
     required String query,
     int page = 1,
+    int pageSize = 10,
   }) async {
     try {
       final response = await dio.get('/everything', queryParameters: {
         'q': query,
         'page': page,
-        'apiKey': 'cd2c4764345442dc8ddec6ebb161e803',
-        'pageSize': 10
+        'apiKey': dotenv.env['NEWS_API_KEY']!,
+        'pageSize': pageSize
       });
 
       // Check if response is successful

@@ -2,7 +2,7 @@
 
 import 'package:featuremind/core/error/failures.dart';
 import 'package:featuremind/features/news_search/presentation/providers/news_providers.dart';
-import 'package:featuremind/features/news_search/presentation/screens/news_rersults_screen.dart';
+import 'package:featuremind/features/news_search/presentation/screens/news_results_screen.dart';
 import 'package:featuremind/features/news_search/presentation/widgets/error_display_widget.dart';
 import 'package:featuremind/features/news_search/presentation/widgets/search_history_widget.dart';
 import 'package:featuremind/features/news_search/presentation/widgets/search_input_widget.dart';
@@ -18,16 +18,36 @@ class SearchScreen extends ConsumerStatefulWidget {
   _SearchScreenState createState() => _SearchScreenState();
 }
 
-class _SearchScreenState extends ConsumerState<SearchScreen> {
+class _SearchScreenState extends ConsumerState<SearchScreen> with SingleTickerProviderStateMixin {
   final TextEditingController _searchController = TextEditingController();
   bool _isSearching = false;
   String? _errorMessage;
   bool _isNetworkError = false;
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+    _animationController.forward();
+  }
 
   Future<void> _performSearch(String query) async {
     if (query.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a search term')),
+        SnackBar(
+          content: const Text('Please enter a search term'),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          backgroundColor: Theme.of(context).colorScheme.secondary,
+        ),
       );
       return;
     }
@@ -98,44 +118,98 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   @override
   void dispose() {
     _searchController.dispose();
+    _animationController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
     return Scaffold(
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        title: const Text('News Explorer'),
+        elevation: 0,
+        backgroundColor: colorScheme.onSurface,
+        foregroundColor: colorScheme.onPrimary,
+        title: Text(
+          'News Explorer',
+          style: textTheme.headlineSmall?.copyWith(
+            color: colorScheme.onPrimary,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         centerTitle: true,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            SearchInputWidget(
-              controller: _searchController,
-              onSearch: _performSearch,
-              isLoading: _isSearching,
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              colorScheme.surface,
+              colorScheme.surfaceContainerHighest,
+            ],
+          ),
+        ),
+        child: FadeTransition(
+          opacity: _fadeAnimation,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20.0, 24.0, 20.0, 16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Welcome message
+                Text(
+                  'Discover the latest news',
+                  style: textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: colorScheme.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Enter a topic to start exploring',
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Search box with animation
+                SearchInputWidget(
+                  controller: _searchController,
+                  onSearch: _performSearch,
+                  isLoading: _isSearching,
+                ),
+                const SizedBox(height: 24),
+
+                // Error message if any
+                if (_errorMessage != null)
+                  ErrorDisplayWidget(
+                    message: _errorMessage!,
+                    isNetworkError: _isNetworkError,
+                    onRetry: () => _performSearch(_searchController.text),
+                  ),
+
+                // Search history section
+                if (_errorMessage == null) ...[
+                  const SizedBox(height: 12),
+
+                  // History items
+                  Expanded(
+                    child: SearchHistoryWidget(
+                      onHistoryItemTap: (query) {
+                        _searchController.text = query;
+                        _performSearch(query);
+                      },
+                    ),
+                  ),
+                ],
+              ],
             ),
-            const SizedBox(height: 16),
-
-            // Error message if any
-            if (_errorMessage != null)
-              ErrorDisplayWidget(
-                message: _errorMessage!,
-                isNetworkError: _isNetworkError,
-                onRetry: () => _performSearch(_searchController.text),
-              ),
-
-            // Show search history when not in error state
-            if (_errorMessage == null)
-              SearchHistoryWidget(
-                onHistoryItemTap: (query) {
-                  _searchController.text = query;
-                  _performSearch(query);
-                },
-              ),
-          ],
+          ),
         ),
       ),
     );

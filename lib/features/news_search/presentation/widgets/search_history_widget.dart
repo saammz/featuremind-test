@@ -14,6 +14,8 @@ class SearchHistoryWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final historyUseCase = ref.watch(getSearchHistoryUseCaseProvider);
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
 
     return FutureBuilder<List<String>>(
       future: historyUseCase(NoParams()).then((result) => result.fold(
@@ -28,12 +30,22 @@ class SearchHistoryWidget extends ConsumerWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Recent Searches',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
+            Row(
+              children: [
+                Icon(
+                  Icons.history,
+                  size: 20,
+                  color: colorScheme.primary,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Recent Searches',
+                  style: textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: colorScheme.onSurface,
+                  ),
+                ),
+              ],
             ),
             Wrap(
               spacing: 8,

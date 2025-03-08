@@ -1,4 +1,3 @@
-// features/news_search/domain/usecases/get_search_history_usecase.dart
 import 'package:dartz/dartz.dart';
 import 'package:featuremind/core/error/failures.dart';
 import 'package:featuremind/core/usecases/usecases.dart';

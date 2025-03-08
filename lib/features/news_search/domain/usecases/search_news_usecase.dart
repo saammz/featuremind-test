@@ -23,15 +23,18 @@ class SearchNewsUseCase implements UseCase<List<NewsArticle>, SearchNewsParams> 
 class SearchNewsParams extends Equatable {
   final String query;
   final int page;
+  final int pageSize;
 
   const SearchNewsParams({
     required this.query,
     this.page = 1,
+    this.pageSize = 10,
   });
 
   @override
   List<Object> get props => [
         query,
-        page
+        page,
+        pageSize
       ];
 }

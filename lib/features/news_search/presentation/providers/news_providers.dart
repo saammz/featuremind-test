@@ -66,12 +66,14 @@ class SearchState {
   final bool isLoading;
   final String? error;
   final int currentPage;
+  final bool hasReachedEnd;
 
   SearchState({
     this.articles = const [],
     this.isLoading = false,
     this.error,
     this.currentPage = 1,
+    this.hasReachedEnd = false,
   });
 
   SearchState copyWith({
@@ -79,43 +81,60 @@ class SearchState {
     bool? isLoading,
     String? error,
     int? currentPage,
+    bool? hasReachedEnd,
   }) {
     return SearchState(
       articles: articles ?? this.articles,
       isLoading: isLoading ?? this.isLoading,
       error: error ?? this.error,
       currentPage: currentPage ?? this.currentPage,
+      hasReachedEnd: hasReachedEnd ?? this.hasReachedEnd,
     );
   }
 }
 
-// In features/news_search/presentation/providers/news_providers.dart
-
 class SearchNotifier extends StateNotifier<SearchState> {
   final SearchNewsUseCase searchNewsUseCase;
+  String? _lastQuery;
+  final int _pageSize = 10;
 
   SearchNotifier({required this.searchNewsUseCase}) : super(SearchState());
 
-  Future<Either<Failure, List<NewsArticle>>> searchNews(String query) async {
-    // Prevent duplicate searches
-    if (state.isLoading) return Right([]);
+  Future<Either<Failure, List<NewsArticle>>> searchNews(String query, {bool isNewSearch = false}) async {
+    // If it's a new search, reset the state
+    if (isNewSearch || _lastQuery != query) {
+      resetSearch();
+      _lastQuery = query;
+    }
+
+    // Prevent duplicate searches or loading if we've reached the end
+    if (state.isLoading || state.hasReachedEnd) {
+      return Right(state.articles);
+    }
 
     state = state.copyWith(isLoading: true, error: null);
 
-    final result = await searchNewsUseCase(SearchNewsParams(query: query, page: state.currentPage));
+    final result = await searchNewsUseCase(SearchNewsParams(query: query, page: state.currentPage, pageSize: _pageSize));
 
-    result.fold(
-        (failure) => state = state.copyWith(isLoading: false, error: failure.message),
-        (articles) => state = state.copyWith(
-            isLoading: false,
-            articles: [
-              ...state.articles,
-              ...articles
-            ],
-            currentPage: state.currentPage + 1));
+    return result.fold((failure) {
+      state = state.copyWith(isLoading: false, error: failure.message);
+      return Left(failure);
+    }, (articles) {
+      // Check if we've reached the end of the results
+      final hasReachedEnd = articles.isEmpty || articles.length < _pageSize;
 
-    // Return the result to allow the caller to handle navigation
-    return result;
+      state = state.copyWith(
+          isLoading: false,
+          articles: isNewSearch
+              ? articles
+              : [
+                  ...state.articles,
+                  ...articles
+                ],
+          currentPage: state.currentPage + 1,
+          hasReachedEnd: hasReachedEnd);
+      return Right(state.articles);
+    });
   }
 
   void resetSearch() {
