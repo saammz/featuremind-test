@@ -1,16 +1,32 @@
 # featuremind
 
-A new Flutter project.
+A Flutter project.
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+Follow these steps to set up and run the project:
 
-A few resources to get you started if this is your first Flutter project:
+### 1. Set Up Environment Variables
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+- Create `.env` and `.env.prod` files in the root directory.
+- Copy the contents of `.env.example` and paste them into both `.env` and `.env.prod`.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+### 2. Get News API Key
+
+- Visit [News API](https://newsapi.org/v2) and create a free account.
+- Generate your API key.
+- Copy the API key and paste it into the `.env` file.
+- If deploying to production, create a production API key and paste it into `.env.prod`.
+
+### 3. Initialize the Flutter Project
+
+- Run the following command to create the necessary platform folders:
+
+  ```sh
+  flutter create .
+
+### 4. Run the project
+
+- Make sure to run `flutter pub get` to get all packages and after that run the project.
+
+Enjoy 😊 .
